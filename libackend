@@ -939,7 +939,7 @@ function Update:Window(Config)
 				callback();
 			end);
 		end;
-		function main:Toggle(text, config, desc, callback)
+function main:Toggle(text, config, desc, callback)
 			config = config or false;
 			local toggled = config;
 			local UICorner = Instance.new("UICorner");
@@ -957,6 +957,7 @@ function Update:Window(Config)
 			local ToggleFrame = Instance.new("Frame");
 			local UICorner_4 = Instance.new("UICorner");
 			local TextBoxIcon = Instance.new("ImageLabel");
+			
 			Button.Name = "Button";
 			Button.Parent = MainFramePage;
 			Button.BackgroundColor3 = _G.Primary;
@@ -967,6 +968,7 @@ function Update:Window(Config)
 			Button.TextColor3 = Color3.fromRGB(0, 0, 0);
 			Button.TextSize = 11;
 			CreateRounded(Button, 5);
+			
 			Title2.Parent = Button;
 			Title2.BackgroundColor3 = Color3.fromRGB(150, 150, 150);
 			Title2.BackgroundTransparency = 1;
@@ -977,12 +979,14 @@ function Update:Window(Config)
 			Title2.TextSize = 15;
 			Title2.TextXAlignment = Enum.TextXAlignment.Left;
 			Title2.AnchorPoint = Vector2.new(0, 0.5);
+			
 			Desc.Parent = Title2;
 			Desc.BackgroundColor3 = Color3.fromRGB(100, 100, 100);
 			Desc.BackgroundTransparency = 1;
 			Desc.Position = UDim2.new(0, 0, 0, 22);
 			Desc.Size = UDim2.new(0, 280, 0, 16);
 			Desc.Font = Enum.Font.Gotham;
+			
 			if desc then
 				Desc.Text = desc;
 				Title2.Position = UDim2.new(0, 15, 0.5, -5);
@@ -993,9 +997,11 @@ function Update:Window(Config)
 				Desc.Visible = false;
 				Button.Size = UDim2.new(1, 0, 0, 36);
 			end;
+			
 			Desc.TextColor3 = Color3.fromRGB(150, 150, 150);
 			Desc.TextSize = 10;
 			Desc.TextXAlignment = Enum.TextXAlignment.Left;
+			
 			ToggleFrame.Name = "ToggleFrame";
 			ToggleFrame.Parent = Button;
 			ToggleFrame.BackgroundColor3 = _G.Dark;
@@ -1005,6 +1011,7 @@ function Update:Window(Config)
 			ToggleFrame.AnchorPoint = Vector2.new(1, 0.5);
 			UICorner_5.CornerRadius = UDim.new(0, 10);
 			UICorner_5.Parent = ToggleFrame;
+			
 			ToggleImage.Name = "ToggleImage";
 			ToggleImage.Parent = ToggleFrame;
 			ToggleImage.BackgroundColor3 = Color3.fromRGB(200, 200, 200);
@@ -1015,6 +1022,7 @@ function Update:Window(Config)
 			ToggleImage.Text = "";
 			ToggleImage.AutoButtonColor = false;
 			CreateRounded(ToggleImage, 10);
+			
 			Circle.Name = "Circle";
 			Circle.Parent = ToggleImage;
 			Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
@@ -1024,7 +1032,10 @@ function Update:Window(Config)
 			Circle.AnchorPoint = Vector2.new(0, 0.5);
 			UICorner_4.CornerRadius = UDim.new(0, 10);
 			UICorner_4.Parent = Circle;
-			ToggleImage.MouseButton1Click:Connect(function()
+
+			-- 🔴 [ MODIFIED PART START ] 🔴
+			-- Logic ko ek local function me daal diya taaki 2 jagah use kar sakein
+			local function FireToggle()
 				if toggled == false then
 					toggled = true;
 					Circle:TweenPosition(UDim2.new(0, 17, 0.5, 0), "Out", "Sine", 0.2, true);
@@ -1041,7 +1052,13 @@ function Update:Window(Config)
 					})):Play();
 				end;
 				pcall(callback, toggled);
-			end);
+			end
+
+			-- Ab click event chhote button aur pure background dono par lag gaya hai!
+			ToggleImage.MouseButton1Click:Connect(FireToggle)
+			Button.MouseButton1Click:Connect(FireToggle)
+			-- 🔴 [ MODIFIED PART END ] 🔴
+
 			if config == true then
 				toggled = true;
 				Circle:TweenPosition(UDim2.new(0, 17, 0.5, 0), "Out", "Sine", 0.4, true);
