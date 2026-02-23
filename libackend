@@ -1270,6 +1270,263 @@ function main:Toggle(text, config, desc, callback)
                     })):Play();
 				end;
 			end);
+            function main:AdvancedDropdown(text, option, config, callback)
+			config = config or {}
+			local isMulti = config.Multi or false
+			local hasSearch = config.Search or false
+			local defaultVals = config.Default
+
+			local isdropping = false
+			local selectedItems = {}
+			
+			local Dropdown = Instance.new("Frame")
+			local DropdownFrameScroll = Instance.new("Frame")
+			local UICorner = Instance.new("UICorner")
+			local UICorner_4 = Instance.new("UICorner")
+			local DropTitle = Instance.new("TextLabel")
+			local DropScroll = Instance.new("ScrollingFrame")
+			local UIListLayout = Instance.new("UIListLayout")
+			local UIPadding = Instance.new("UIPadding")
+			local SelectItems = Instance.new("TextButton")
+			local ArrowDown = Instance.new("ImageLabel")
+			
+			Dropdown.Name = "Dropdown"
+			Dropdown.Parent = MainFramePage
+			Dropdown.BackgroundColor3 = _G.Primary
+			Dropdown.BackgroundTransparency = 0.8
+			Dropdown.ClipsDescendants = false
+			Dropdown.Size = UDim2.new(1, 0, 0, 40)
+			UICorner.CornerRadius = UDim.new(0, 5)
+			UICorner.Parent = Dropdown
+			
+			DropTitle.Name = "DropTitle"
+			DropTitle.Parent = Dropdown
+			DropTitle.BackgroundColor3 = _G.Primary
+			DropTitle.BackgroundTransparency = 1
+			DropTitle.Size = UDim2.new(1, 0, 0, 30)
+			DropTitle.Font = Enum.Font.Cartoon
+			DropTitle.Text = text
+			DropTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			DropTitle.TextSize = 15
+			DropTitle.TextXAlignment = Enum.TextXAlignment.Left
+			DropTitle.Position = UDim2.new(0, 15, 0, 5)
+			
+			SelectItems.Name = "SelectItems"
+			SelectItems.Parent = Dropdown
+			SelectItems.BackgroundColor3 = Color3.fromRGB(24, 24, 26)
+			SelectItems.TextColor3 = Color3.fromRGB(255, 255, 255)
+			SelectItems.BackgroundTransparency = 0
+			SelectItems.Position = UDim2.new(1, -5, 0, 5)
+			SelectItems.Size = UDim2.new(0, 100, 0, 30)
+			SelectItems.AnchorPoint = Vector2.new(1, 0)
+			SelectItems.Font = Enum.Font.GothamMedium
+			SelectItems.TextSize = 9
+			SelectItems.TextTruncate = Enum.TextTruncate.AtEnd
+			SelectItems.ClipsDescendants = true
+			SelectItems.Text = "   Select Items"
+			SelectItems.TextXAlignment = Enum.TextXAlignment.Left
+			CreateRounded(SelectItems, 5)
+			
+			ArrowDown.Name = "ArrowDown"
+			ArrowDown.Parent = Dropdown
+			ArrowDown.BackgroundTransparency = 1
+			ArrowDown.AnchorPoint = Vector2.new(1, 0)
+			ArrowDown.Position = UDim2.new(1, -110, 0, 10)
+			ArrowDown.Size = UDim2.new(0, 20, 0, 20)
+			ArrowDown.Image = "rbxassetid://10709790948"
+			ArrowDown.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			
+			DropdownFrameScroll.Name = "DropdownFrameScroll"
+			DropdownFrameScroll.Parent = Dropdown
+			DropdownFrameScroll.BackgroundColor3 = Color3.fromRGB(24, 24, 26)
+			DropdownFrameScroll.ClipsDescendants = true
+			DropdownFrameScroll.Size = UDim2.new(1, -10, 0, 0)
+			DropdownFrameScroll.Position = UDim2.new(0, 5, 0, 40)
+			DropdownFrameScroll.Visible = false
+			UICorner_4.CornerRadius = UDim.new(0, 5)
+			UICorner_4.Parent = DropdownFrameScroll
+
+			-- [ NEW: SEARCH BAR ] --
+			local SearchBox
+			if hasSearch then
+				SearchBox = Instance.new("TextBox")
+				SearchBox.Name = "SearchBox"
+				SearchBox.Parent = DropdownFrameScroll
+				SearchBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+				SearchBox.Size = UDim2.new(1, -10, 0, 25)
+				SearchBox.Position = UDim2.new(0, 5, 0, 5)
+				SearchBox.Font = Enum.Font.Gotham
+				SearchBox.PlaceholderText = "Search..."
+				SearchBox.Text = ""
+				SearchBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+				SearchBox.TextSize = 11
+				CreateRounded(SearchBox, 4)
+			end
+			
+			DropScroll.Name = "DropScroll"
+			DropScroll.Parent = DropdownFrameScroll
+			DropScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+			DropScroll.Active = true
+			DropScroll.BackgroundTransparency = 1
+			DropScroll.BorderSizePixel = 0
+			-- Adjust size/pos if search bar is present
+			DropScroll.Position = hasSearch and UDim2.new(0, 0, 0, 35) or UDim2.new(0, 0, 0, 5)
+			DropScroll.Size = hasSearch and UDim2.new(1, 0, 1, -40) or UDim2.new(1, 0, 1, -10)
+			DropScroll.ScrollBarThickness = 3
+			
+			UIListLayout.Parent = DropScroll
+			UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			UIListLayout.Padding = UDim.new(0, 1)
+			
+			UIPadding.Parent = DropScroll
+			UIPadding.PaddingLeft = UDim.new(0, 5)
+			UIPadding.PaddingRight = UDim.new(0, 10)
+			
+			-- Auto Update Canvas Size
+			UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+				DropScroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+			end)
+
+			local function UpdateVisuals()
+				if #selectedItems == 0 then
+					SelectItems.Text = "   Select Items"
+				else
+					SelectItems.Text = "   " .. table.concat(selectedItems, ", ")
+				end
+				
+				for _, v in ipairs(DropScroll:GetChildren()) do
+					if v:IsA("TextButton") then
+						local ind = v:FindFirstChild("SelectedItems")
+						if table.find(selectedItems, v.Text) then
+							v.BackgroundTransparency = 0.8
+							v.TextTransparency = 0
+							if ind then ind.BackgroundTransparency = 0 end
+						else
+							v.BackgroundTransparency = 1
+							v.TextTransparency = 0.5
+							if ind then ind.BackgroundTransparency = 1 end
+						end
+					end
+				end
+			end
+
+			local function AddItem(tStr)
+				local Item = Instance.new("TextButton")
+				Item.Name = "Item"
+				Item.Parent = DropScroll
+				Item.BackgroundColor3 = _G.Primary
+				Item.BackgroundTransparency = 1
+				Item.Size = UDim2.new(1, 0, 0, 30)
+				Item.Font = Enum.Font.Nunito
+				Item.Text = tostring(tStr)
+				Item.TextColor3 = Color3.fromRGB(255, 255, 255)
+				Item.TextSize = 13
+				Item.TextTransparency = 0.5
+				Item.TextXAlignment = Enum.TextXAlignment.Left
+				CreateRounded(Item, 5)
+				
+				local ItemPadding = Instance.new("UIPadding")
+				ItemPadding.Parent = Item
+				ItemPadding.PaddingLeft = UDim.new(0, 8)
+				
+				local SelectedIndicator = Instance.new("Frame")
+				SelectedIndicator.Name = "SelectedItems"
+				SelectedIndicator.Parent = Item
+				SelectedIndicator.BackgroundColor3 = _G.Third
+				SelectedIndicator.BackgroundTransparency = 1
+				SelectedIndicator.Size = UDim2.new(0, 3, 0.4, 0)
+				SelectedIndicator.Position = UDim2.new(0, -8, 0.5, 0)
+				SelectedIndicator.AnchorPoint = Vector2.new(0, 0.5)
+				CreateRounded(SelectedIndicator, 999)
+				
+				Item.MouseButton1Click:Connect(function()
+					local val = Item.Text
+					if isMulti then
+						local foundIndex = table.find(selectedItems, val)
+						if foundIndex then
+							table.remove(selectedItems, foundIndex)
+						else
+							table.insert(selectedItems, val)
+						end
+					else
+						selectedItems = {val}
+						-- Close dropdown automatically if it's Single selection
+						isdropping = false
+						TweenService:Create(DropdownFrameScroll, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, -10, 0, 0), Visible = false}):Play()
+						TweenService:Create(Dropdown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+						TweenService:Create(ArrowDown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+					end
+					UpdateVisuals()
+					callback(isMulti and selectedItems or selectedItems[1])
+				end)
+			end
+
+			-- Populate Options
+			if option and type(option) == "table" then
+				for _, v in ipairs(option) do AddItem(v) end
+			end
+
+			-- Search Filtering Logic
+			if hasSearch then
+				SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+					local query = string.lower(SearchBox.Text)
+					for _, v in ipairs(DropScroll:GetChildren()) do
+						if v:IsA("TextButton") then
+							if query == "" or string.find(string.lower(v.Text), query) then
+								v.Visible = true
+							else
+								v.Visible = false
+							end
+						end
+					end
+				end)
+			end
+
+			-- Setup Default Values
+			if defaultVals then
+				if isMulti and type(defaultVals) == "table" then
+					selectedItems = defaultVals
+				elseif not isMulti and type(defaultVals) == "string" then
+					selectedItems = {defaultVals}
+				end
+				UpdateVisuals()
+				pcall(function() callback(isMulti and selectedItems or selectedItems[1]) end)
+			end
+
+			-- Dropdown Toggle Logic
+			SelectItems.MouseButton1Click:Connect(function()
+				local targetHeight = hasSearch and 140 or 100
+				local fullHeight = hasSearch and 185 or 145
+				
+				if isdropping == false then
+					isdropping = true
+					TweenService:Create(DropdownFrameScroll, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, -10, 0, targetHeight), Visible = true}):Play()
+					TweenService:Create(Dropdown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, fullHeight)}):Play()
+					TweenService:Create(ArrowDown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}):Play()
+				else
+					isdropping = false
+					TweenService:Create(DropdownFrameScroll, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, -10, 0, 0), Visible = false}):Play()
+					TweenService:Create(Dropdown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+					TweenService:Create(ArrowDown, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+				end
+			end)
+
+			-- Public Methods
+			local dropfunc = {}
+			function dropfunc:Add(t) AddItem(t) end
+			function dropfunc:Clear()
+				for _, v in ipairs(DropScroll:GetChildren()) do
+					if v:IsA("TextButton") then v:Destroy() end
+				end
+				selectedItems = {}
+				UpdateVisuals()
+			end
+			function dropfunc:Refresh(newList)
+				self:Clear()
+				for _, v in ipairs(newList) do self:Add(v) end
+			end
+			return dropfunc
+		end;
 			local dropfunc = {};
 			function dropfunc:Add(t)
 				local Item = Instance.new("TextButton");
