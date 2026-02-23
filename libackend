@@ -2035,14 +2035,12 @@ function main:MultiDropdown(text, option, callback)
 			PaddingDrop.PaddingLeft = UDim.new(0, 10);
 			PaddingDrop.PaddingRight = UDim.new(0, 10);
 			PaddingDrop.Parent = DropScroll;
-			UIListLayout.Parent = DropScroll;
-			UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
-			UIListLayout.Padding = UDim.new(0, 1);
-			UIPadding.Parent = DropScroll;
-			UIPadding.PaddingLeft = UDim.new(0, 5);
-			UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				DropScroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y);
-			end);
+            UIListLayout.Parent = DropScroll;
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder;
+UIListLayout.Padding = UDim.new(0, 1);
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    DropScroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y);
+end);
 			local function AddItem(v)
 				local Item = Instance.new("TextButton");
 				local CRNRitems = Instance.new("UICorner");
