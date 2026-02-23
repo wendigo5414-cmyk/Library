@@ -1033,11 +1033,14 @@ function main:Toggle(text, config, desc, callback)
 			UICorner_4.CornerRadius = UDim.new(0, 10);
 			UICorner_4.Parent = Circle;
 
-			-- 🔴 [ MODIFIED PART START ] 🔴
-			-- Logic ko ek local function me daal diya taaki 2 jagah use kar sakein
-			local function FireToggle()
-				if toggled == false then
-					toggled = true;
+			local function FireToggle(newState)
+				if newState ~= nil then
+					if toggled == newState then return end
+					toggled = newState
+				else
+					toggled = not toggled
+				end
+				if toggled then
 					Circle:TweenPosition(UDim2.new(0, 17, 0.5, 0), "Out", "Sine", 0.2, true);
 					(TweenService:Create(ToggleImage, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 						BackgroundColor3 = _G.Third,
@@ -1054,20 +1057,18 @@ function main:Toggle(text, config, desc, callback)
 				pcall(callback, toggled);
 			end
 
-			-- Ab click event chhote button aur pure background dono par lag gaya hai!
-			ToggleImage.MouseButton1Click:Connect(FireToggle)
-			Button.MouseButton1Click:Connect(FireToggle)
-			-- 🔴 [ MODIFIED PART END ] 🔴
+			ToggleImage.MouseButton1Click:Connect(function() FireToggle() end)
+			Button.MouseButton1Click:Connect(function() FireToggle() end)
 
 			if config == true then
-				toggled = true;
-				Circle:TweenPosition(UDim2.new(0, 17, 0.5, 0), "Out", "Sine", 0.4, true);
-				(TweenService:Create(ToggleImage, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					BackgroundColor3 = _G.Third,
-					BackgroundTransparency = 0
-				})):Play();
-				pcall(callback, toggled);
+				FireToggle(true)
 			end;
+			
+			local toggleapi = {}
+			function toggleapi:Set(state)
+				FireToggle(state)
+			end
+			return toggleapi
 		end;
 		function main:Dropdown(text, option, var, callback)
 			local isdropping = false;
@@ -1525,6 +1526,15 @@ function main:Toggle(text, config, desc, callback)
 				self:Clear()
 				for _, v in ipairs(newList) do self:Add(v) end
 			end
+			function dropfunc:Set(val)
+				if isMulti and type(val) == "table" then
+					selectedItems = val
+				elseif not isMulti and type(val) == "string" then
+					selectedItems = {val}
+				end
+				UpdateVisuals()
+				pcall(function() callback(isMulti and selectedItems or selectedItems[1]) end)
+			end
 			return dropfunc
 		end;
 			local dropfunc = {};
@@ -1594,6 +1604,25 @@ function main:Toggle(text, config, desc, callback)
 					end;
 				end;
 			end;
+			function dropfunc:Set(val)
+				activeItem = tostring(val)
+				SelectItems.Text = "   " .. activeItem
+				for i, v in next, DropScroll:GetChildren() do
+					if v:IsA("TextButton") then
+						local SelectedItems = v:FindFirstChild("SelectedItems")
+						if activeItem == v.Text then
+							v.BackgroundTransparency = 0.8
+							v.TextTransparency = 0
+							if SelectedItems then SelectedItems.BackgroundTransparency = 0 end
+						else
+							v.BackgroundTransparency = 1
+							v.TextTransparency = 0.5
+							if SelectedItems then SelectedItems.BackgroundTransparency = 1 end
+						end
+					end
+				end
+				pcall(callback, activeItem)
+			end
 			return dropfunc;
 		end;
 		function main:Slider(text, min, max, set, callback)
@@ -1668,7 +1697,7 @@ function main:Toggle(text, config, desc, callback)
 			bar1.Parent = bar;
 			bar1.BackgroundColor3 = _G.Third;
 			bar1.BackgroundTransparency = 0;
-			bar1.Size = UDim2.new(set / max, 0, 0, 4);
+			bar1.Size = UDim2.new((set - min) / (max - min), 0, 0, 4);
 			bar1corner.CornerRadius = UDim.new(0, 5);
 			bar1corner.Name = "bar1corner";
 			bar1corner.Parent = bar1;
@@ -1721,6 +1750,16 @@ function main:Toggle(text, config, desc, callback)
 					circlebar.Position = UDim2.new(0, math.clamp(Input.Position.X - bar1.AbsolutePosition.X - 5, 0, 100), 0, -5);
 				end;
 			end);
+			
+			local sliderapi = {}
+			function sliderapi:Set(val)
+				Value = math.clamp(tonumber(val) or min, min, max)
+				local percent = (Value - min) / (max - min)
+				bar1.Size = UDim2.new(percent, 0, 0, 4)
+				ValueText.Text = tostring(Value)
+				pcall(callback, Value)
+			end
+			return sliderapi
 		end;
 		function main:Textbox(text, disappear, callback)
 			local Textbox = Instance.new("Frame");
@@ -1768,6 +1807,13 @@ function main:Toggle(text, config, desc, callback)
 			end);
 			UICorner.CornerRadius = UDim.new(0, 5);
 			UICorner.Parent = RealTextbox;
+			
+			local boxapi = {}
+			function boxapi:Set(val)
+				RealTextbox.Text = tostring(val)
+				pcall(callback, RealTextbox.Text)
+			end
+			return boxapi
 		end;
 		function main:Label(text)
 			local Frame = Instance.new("Frame");
