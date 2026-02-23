@@ -2023,8 +2023,10 @@ function main:MultiDropdown(text, option, callback)
 			DropScroll.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
 			DropScroll.BackgroundTransparency = 1;
 			DropScroll.BorderSizePixel = 0;
-			DropScroll.Position = UDim2.new(0, 0, 0, 10);
-			DropScroll.Size = UDim2.new(1, 0, 0, 80);
+            DropScroll.Position = UDim2.new(0, 0, 0, 5);
+            DropScroll.Size = UDim2.new(1, -6, 1, -10);
+            DropScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y;
+            DropScroll.CanvasSize = UDim2.new(0, 0, 0, 0);
 			DropScroll.AnchorPoint = Vector2.new(0, 0);
 			DropScroll.ClipsDescendants = true;
 			DropScroll.ScrollBarThickness = 3;
