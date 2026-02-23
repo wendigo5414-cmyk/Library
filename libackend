@@ -1756,6 +1756,7 @@ function main:Toggle(text, config, desc, callback)
 				Value = math.clamp(tonumber(val) or min, min, max)
 				local percent = (Value - min) / (max - min)
 				bar1.Size = UDim2.new(percent, 0, 0, 4)
+				circlebar.Position = UDim2.new(0, math.clamp((percent * 100) - 5, 0, 100), 0, -5)
 				ValueText.Text = tostring(Value)
 				pcall(callback, Value)
 			end
